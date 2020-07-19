@@ -1,29 +1,72 @@
-import Vue from 'vue'
-import VueRouter from 'vue-router'
-import Home from '../views/Home.vue'
+import Vue from 'vue';
+import VueRouter from 'vue-router';
+import Home from '@/views/Home';
+import SignIn from '@/views/auth/SignIn';
+import SignUp from '@/views/auth/SignUp';
+import Archives from '@/views/Archives';
+import Recent from '@/views/Recent';
 
-Vue.use(VueRouter)
+import { auth } from '@/firebase/init';
 
-  const routes = [
-  {
-    path: '/',
-    name: 'Home',
-    component: Home
-  },
-  {
-    path: '/about',
-    name: 'About',
-    // route level code-splitting
-    // this generates a separate chunk (about.[hash].js) for this route
-    // which is lazy-loaded when the route is visited.
-    component: () => import(/* webpackChunkName: "about" */ '../views/About.vue')
-  }
-]
+Vue.use(VueRouter);
+
+const routes = [
+	{
+		path: '/',
+		name: 'Main',
+		beforeEnter: (to, from, next) => {
+			next({ name: 'Recent' });
+		}
+	},
+	{
+		path: '/recent',
+		name: 'Recent',
+		component: Recent,
+		meta: {
+			requiresAuth: true
+		}
+	},
+	{
+		path: '/archives',
+		name: 'Archives',
+		component: Archives,
+		meta: {
+			requiresAuth: true
+		}
+	},
+	{
+		path: '/sign-in',
+		name: 'SignIn',
+		component: SignIn
+	},
+	{
+		path: '/sign-up',
+		name: 'SignUp',
+		component: SignUp
+	},
+	{
+		path: '/home',
+		name: 'Home',
+		component: Home
+	}
+];
 
 const router = new VueRouter({
-  mode: 'history',
-  base: process.env.BASE_URL,
-  routes
-})
+	mode: 'history',
+	base: process.env.BASE_URL,
+	routes
+});
 
-export default router
+router.beforeEach((to, from, next) => {
+	if (to.matched.some((rec) => rec.meta.requiresAuth)) {
+		if (auth.currentUser) {
+			next();
+		} else {
+			next({ name: 'Home' });
+		}
+	} else {
+		next();
+	}
+});
+
+export default router;
