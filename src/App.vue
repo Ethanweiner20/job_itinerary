@@ -2,7 +2,6 @@
   <div id="app">
     <Navbar />
     <InnerNavbar v-if="user" />
-
     <router-view></router-view>
   </div>
 </template>

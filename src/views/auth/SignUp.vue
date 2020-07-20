@@ -48,9 +48,14 @@ export default {
         auth
           .createUserWithEmailAndPassword(this.email, this.password)
           .then(cred => {
-            usersCollection.doc(cred.user.uid).set({
-              email: user.email
-            });
+            usersCollection
+              .doc(cred.user.uid)
+              .set({
+                email: cred.user.email
+              })
+              .then(() => {
+                console.log("User created");
+              });
             this.$router.push({ name: "Recent" });
           })
           .catch(err => {

@@ -1,13 +1,15 @@
 <template>
-  <div class="recent"></div>
+  <div class="recent">
+    <Job />
+  </div>
 </template>
 
 <script>
-import InnerNavbar from "@/components/InnerNavbar";
+import Job from "@/components/Job";
 export default {
   name: "Recent",
   components: {
-    InnerNavbar
+    Job
   }
 };
 </script>
