@@ -39,12 +39,12 @@
               id="customer"
               class="form-control"
               placeholder="Customer"
-              v-model="customer"
+              v-model="jobData.customer"
             />
           </div>
           <div class="form-group col-12 col-sm-6 col-lg-6">
             <label for="date" class="font-weight-bold">Date</label>
-            <input type="date" class="form-control" id="date" v-model="date" />
+            <input type="date" class="form-control" id="date" v-model="jobData.date" />
           </div>
           <div class="form-group col-12 col-sm-12 col-lg-4">
             <label for="job-location" class="font-weight-bold">Job Location</label>
@@ -53,7 +53,7 @@
               class="form-control"
               id="location"
               placeholder="Location"
-              v-model="location"
+              v-model="jobData.location"
             />
           </div>
           <div class="form-group col-12 col-sm-6 col-lg-4">
@@ -63,7 +63,7 @@
               class="form-control"
               id="time"
               placeholder="Start Time"
-              v-model="startTime"
+              v-model="jobData.startTime"
             />
           </div>
           <div class="form-group col-12 col-sm-6 col-lg-4">
@@ -73,7 +73,7 @@
               class="form-control"
               id="hours"
               placeholder="End Time / Hours"
-              v-model="hours"
+              v-model="jobData.hours"
             />
           </div>
         </div>
@@ -81,35 +81,52 @@
         <!--Tools Input-->
         <div class="form-group tools-form">
           <label for="tools" class="font-weight-bold">Tools</label>
-          <div v-for="(tool, index) in tools" :key="index"></div>
+          <Tool v-for="(tool, index) in jobData.tools" :key="index" :tool="tool" />
         </div>
 
         <div class="mb-3">
-          <button type="button" class="btn btn-sm tools-button d-inline text-white">+ New Tool</button>
+          <button
+            type="button"
+            class="btn btn-sm tools-button d-inline text-white"
+            @click="addTool"
+          >+ New Tool</button>
           <p class="text-muted font-italic d-inline ml-2">or press TAB</p>
         </div>
 
         <!--Tasks Input-->
         <div class="form-group tasks-form">
           <label for="tasks" class="font-weight-bold">Tasks</label>
-          <div v-for="(task, index) in tasks" :key="index"></div>
+          <Task v-for="(task, index) in jobData.tasks" :key="index" :task="task" />
         </div>
 
         <div class="mb-3">
-          <button type="button" class="btn btn-sm tasks-button d-inline text-white">+ New Task</button>
+          <button
+            type="button"
+            class="btn btn-sm tasks-button d-inline text-white"
+            @click="addTask"
+          >+ New Task</button>
           <p class="text-muted font-italic d-inline ml-2">or press TAB</p>
         </div>
 
         <div class="form-group">
           <label for="additional-notes" class="font-weight-bold">Additional Notes</label>
-          <textarea class="form-control" rows="1" name="additionalNotes" placeholder="Notes"></textarea>
+          <textarea
+            class="form-control"
+            rows="1"
+            name="additionalNotes"
+            placeholder="Notes"
+            v-model="jobData.additionalNotes"
+          ></textarea>
         </div>
         <div class="form-group images-form">
           <label for="images" class="images-label font-weight-bold">Images</label>
-          <div class="images-container"></div>
+          <div class="images-container">
+            <Img v-for="(image, index) in jobData.images" :key="index" :image="image" />
+          </div>
           <button
             type="button"
             class="mt-2 btn btn-sm images-button d-inline text-white"
+            @click="addImage"
           >+ New Image</button>
         </div>
       </div>
@@ -169,21 +186,29 @@
 </template>
 
 <script>
+import { mapGetters } from "vuex";
+
+import Tool from "./job_components/Tool";
+import Task from "./job_components/Task";
+import Img from "./job_components/Img";
 export default {
   name: "Job",
-  data() {
-    return {
-      additionalNotes: "",
-      customer: "",
-      date: new Date(),
-      hours: "",
-      images: [],
-      location: "",
-      startTime: "",
-      tasks: [],
-      tools: [],
-      worker: null
-    };
+  components: {
+    Tool,
+    Task,
+    Img
+  },
+  computed: mapGetters(["jobData"]),
+  methods: {
+    addTool() {
+      this.jobData.tools.push({});
+    },
+    addTask() {
+      this.jobData.tasks.push({});
+    },
+    addImage() {
+      this.jobData.images.push({});
+    }
   }
 };
 </script>
@@ -194,6 +219,12 @@ $tasks-color: rgb(0, 107, 93);
 .job {
   .form-check {
     font-size: 12px;
+  }
+  .tools-button {
+    background-color: $tools-color;
+    &:hover {
+      background-color: darken($tools-color, 5);
+    }
   }
 
   .tools-form {
@@ -209,13 +240,6 @@ $tasks-color: rgb(0, 107, 93);
 
   select {
     border-radius: 0px 5px 5px 0px !important;
-  }
-
-  .tools-button {
-    background-color: $tools-color;
-    &:hover {
-      background-color: darken($tools-color, 5);
-    }
   }
 
   textarea {

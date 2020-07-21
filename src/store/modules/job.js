@@ -1,23 +1,39 @@
 const state = {
 	jobData: {
-		additionalNotes: '',
-		customer: '',
-		date: new Date(),
-		hours: '',
+		additionalNotes: 'Some notes',
+		customer: 'Some customer',
+		date: '2020-07-18',
+		hours: '8',
 		images: [],
-		location: '',
-		startTime: '',
-		tasks: [],
+		location: 'Some location',
+		startTime: 'Some time',
+		tasks: [
+			{
+				completed: true,
+				name: 'Task Name',
+				notes: 'Yessir'
+			}
+		],
 		tools: [],
-		worker: null
+		worker: ''
 	}
 };
 
-const getters = {};
+const getters = {
+	jobData: (state) => state.jobData
+};
 
-const actions = {};
+const actions = {
+	getJobData({ commit }) {
+		// Retrieve job data from database & commit
+	}
+};
 
-const mutations = {};
+const mutations = {
+	setJobData(state, data) {
+		state.jobData = data;
+	}
+};
 
 export default {
 	state,
