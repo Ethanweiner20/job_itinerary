@@ -77,17 +77,7 @@
             >+ New Date</button>
             <p class="text-muted font-italic d-inline ml-2">or press TAB</p>
           </div>
-          <div class="form-group col-12 col-sm-6 col-lg-4">
-            <label for="time" class="font-weight-bold">Start Time</label>
-            <input
-              type="text"
-              class="form-control"
-              id="time"
-              placeholder="Start Time"
-              v-model="jobData.startTime"
-            />
-          </div>
-          <div class="form-group col-12 col-sm-6 col-lg-4">
+          <div class="form-group col-12 col-md-6">
             <label for="customer" class="font-weight-bold">Customer</label>
             <input
               type="text"
@@ -97,7 +87,7 @@
               v-model="jobData.customer"
             />
           </div>
-          <div class="form-group col-12 col-sm-12 col-lg-4">
+          <div class="form-group col-12 col-md-6">
             <label for="job-location" class="font-weight-bold">Job Location</label>
             <input
               type="text"
@@ -293,7 +283,6 @@ export default {
           customer: "",
           images: [],
           location: "",
-          startTime: "",
           tasks: [],
           tools: [],
         })
@@ -385,7 +374,6 @@ export default {
         customer: "",
         images: [],
         location: "",
-        startTime: "",
         tasks: [],
         tools: [],
       });

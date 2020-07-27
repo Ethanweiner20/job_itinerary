@@ -40,7 +40,10 @@
 </template>
 
 <script>
-export default {};
+import { auth } from "@/firebase/init";
+export default {
+  name: "Home",
+};
 </script>
 
 <style lang="scss">

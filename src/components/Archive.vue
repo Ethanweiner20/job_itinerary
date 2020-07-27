@@ -1,9 +1,5 @@
 <template>
-  <div
-    class="archive"
-    v-if="archive.data.dates[0] || archive.data.customer || archive.data.startTime"
-    @click="goToArchive"
-  >
+  <div class="archive" v-if="archive.data.dates[0] || archive.data.customer" @click="goToArchive">
     <a href="#" class="data-link list-group-item list-group-item-action">
       <button
         type="button"

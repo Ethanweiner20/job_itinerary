@@ -32,7 +32,7 @@ export default {
         .doc(auth.currentUser.uid)
         .collection("jobs")
         .where("worker", "==", this.worker)
-        .orderBy("created_at", "asc")
+        .orderBy("created_at", "desc")
         .onSnapshot((snapshot) => {
           this.archives = [];
           snapshot.docs.forEach((doc) => {
