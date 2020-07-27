@@ -5,7 +5,8 @@
       <router-link :to="{ name: 'Recent'}" class="navbar-brand">jobitinerary.com</router-link>
       <div class="dropdown">
         <button
-          class="btn btn-info dropdown-toggle"
+          class="btn btn-info"
+          :class="{ 'dropdown-toggle' : user}"
           type="button"
           id="account-status"
           data-toggle="dropdown"
@@ -15,7 +16,7 @@
           <span v-if="user">{{ user.email }}</span>
           <span v-else>Not Signed In</span>
         </button>
-        <div class="dropdown-menu" aria-labelledby="account-status">
+        <div v-if="user" class="dropdown-menu" aria-labelledby="account-status">
           <a href="#" class="dropdown-item" id="sign-out-button" @click="signOut">Sign out</a>
         </div>
       </div>
@@ -24,7 +25,7 @@
 </template>
 
 <script>
-import { mapGetters } from "vuex";
+import { mapGetters, mapMutations } from "vuex";
 import { auth } from "@/firebase/init";
 export default {
   name: "Navbar",
@@ -32,15 +33,16 @@ export default {
     return {};
   },
   computed: {
-    ...mapGetters(["user"])
+    ...mapGetters(["user"]),
   },
   methods: {
     signOut() {
       auth.signOut().then(() => {
         this.$router.push({ name: "Home" });
       });
-    }
-  }
+      this.$store.commit("setWorker", null);
+    },
+  },
 };
 </script>
 

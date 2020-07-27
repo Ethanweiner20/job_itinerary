@@ -14,15 +14,16 @@ export default {
   name: "App",
   components: {
     Navbar,
-    InnerNavbar
+    InnerNavbar,
   },
   created() {
+    console.log("made");
     this.listenToAuth();
   },
   methods: {
-    ...mapActions(["listenToAuth"])
+    ...mapActions(["listenToAuth"]),
   },
-  computed: mapGetters(["user"])
+  computed: mapGetters(["user"]),
 };
 </script>
 

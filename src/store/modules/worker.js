@@ -2,11 +2,18 @@ const state = {
 	worker: null
 };
 
-const getters = {};
+const getters = {
+	worker: (state) => state.worker
+};
 
 const actions = {};
 
-const mutations = {};
+const mutations = {
+	setWorker: (state, worker) => {
+		state.worker = worker;
+		localStorage.setItem('worker', worker);
+	}
+};
 
 export default {
 	state,

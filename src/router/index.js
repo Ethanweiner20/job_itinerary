@@ -5,6 +5,7 @@ import SignIn from '@/views/auth/SignIn';
 import SignUp from '@/views/auth/SignUp';
 import Archives from '@/views/Archives';
 import Recent from '@/views/Recent';
+import ArchivesJob from '@/views/ArchiveJob';
 
 import { auth } from '@/firebase/init';
 
@@ -48,6 +49,15 @@ const routes = [
 		path: '/home',
 		name: 'Home',
 		component: Home
+	},
+	{
+		path: '/archives/:id',
+		name: 'ArchivesJob',
+		component: ArchivesJob,
+		props: true,
+		meta: {
+			requiresAuth: true
+		}
 	}
 ];
 

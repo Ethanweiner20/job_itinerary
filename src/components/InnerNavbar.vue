@@ -5,8 +5,14 @@
       class="select-worker p-3 rounded border border-success shadow-lg mt-4"
       style="border-bottom: none !important; margin-top: -3px;"
     >
-      <h4 class="text-left">Select a Worker</h4>
-      <select class="custom-select my-2 workers-select" size="5">
+      <h4 class="text-left" v-if="!(this.$route.name === 'ArchivesJob')">Select a Worker</h4>
+      <select
+        ref="workersSelect"
+        class="custom-select my-2 workers-select"
+        size="5"
+        @change="changeWorker"
+        v-if="!(this.$route.name === 'ArchivesJob')"
+      >
         <option selected class="font-italic" disabled>Select worker or group</option>
         <option
           v-for="(worker, index) in workers"
@@ -22,6 +28,7 @@
         data-target="#new-worker-modal"
         class="mr-1 my-1 new-worker btn d-inline text-white bg-success shadow"
         style="width: 275px;"
+        v-if="!(this.$route.name==='Archives' || this.$route.name ==='ArchivesJob')"
       >+ New Worker/Group</button>
       <button
         type="button"
@@ -29,6 +36,7 @@
         data-target="#delete-worker-modal"
         class="my-1 delete-worker btn btn-danger d-inline text-white shadow"
         style="width: 275px;"
+        v-if="!(this.$route.name==='Archives' || this.$route.name ==='ArchivesJob')"
       >x Delete Selected Worker/Group</button>
     </div>
     <!-- Tabs -->
@@ -82,12 +90,15 @@
     </div>
     <div class="modal fade" id="delete-worker-modal" tabindex="-1" role="dialog" aria-hidden="true">
       <div class="modal-dialog" role="document">
-        <form class="delete-worker-form">
+        <form class="delete-worker-form" @submit.prevent="deleteWorker">
           <div class="modal-content">
             <div class="modal-header">
               <h5 class="modal-title">
                 Delete Worker/Group:
-                <span id="deleted-worker" class="font-italic text-danger"></span>
+                <span
+                  id="deleted-worker"
+                  class="font-italic text-danger"
+                >{{ worker }}</span>
               </h5>
               <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                 <span aria-hidden="true">&times;</span>
@@ -105,7 +116,7 @@
 </template>
 
 <script>
-import { mapGetters } from "vuex";
+import { mapGetters, mapMutations, mapActions } from "vuex";
 import { db, usersCollection } from "@/firebase/init";
 export default {
   name: "InnerNavbar",
@@ -113,18 +124,79 @@ export default {
     return {
       jobsCollection: null,
       newWorker: null,
-      workers: []
+      workers: [],
     };
   },
   methods: {
+    ...mapMutations(["setWorker", "setJobData"]),
+    changeWorker(e) {
+      this.$store.commit("setWorker", e.target.value);
+    },
     async addWorker() {
-      this.jobsCollection.add({
+      await this.jobsCollection.add({
         worker: this.newWorker,
-        created_at: new Date()
+        created_at: new Date(),
+        dates: [],
+        additionalNotes: "",
+        customer: "",
+        images: [],
+        location: "",
+        startTime: "",
+        tasks: [],
+        tools: [],
       });
-    }
+      $("#new-worker-modal").modal("toggle");
+      this.newWorker = null;
+    },
+    async deleteWorker() {
+      await this.jobsCollection
+        .where("worker", "==", this.worker)
+        .get()
+        .then((snapshot) => {
+          snapshot.docs.forEach((doc) => {
+            this.jobsCollection.doc(doc.id).delete();
+          });
+        });
+      this.workers = this.workers.filter((worker) => !(worker == this.worker));
+      this.setWorker(null);
+      this.setJobData({
+        worker: this.worker,
+        created_at: new Date(),
+        dates: [],
+        additionalNotes: "",
+        customer: "",
+        images: [],
+        location: "",
+        startTime: "",
+        tasks: [],
+        tools: [],
+      });
+      $("#delete-worker-modal").modal("toggle");
+    },
+    selectWorker() {
+      if (!(this.$route.name === "ArchivesJob")) {
+        const worker = localStorage.getItem("worker");
+        const select = this.$refs.workersSelect;
+        if (worker && select.children[0].selected === true) {
+          select.children[0].selected = false;
+          select.querySelector(`option[value="${worker}"]`).selected = true;
+          select.dispatchEvent(new Event("change"));
+        }
+      }
+    },
   },
-  created() {
+  async created() {
+    let selected = false;
+    if (this.$route.name === "ArchivesJob" && this.user) {
+      usersCollection
+        .doc(this.user.uid)
+        .collection("jobs")
+        .doc(this.$route.params.id)
+        .get()
+        .then((snapshot) => {
+          this.$store.commit("setWorker", snapshot.data().worker);
+        });
+    }
     if (this.user) {
       this.jobsCollection = usersCollection
         .doc(this.user.uid)
@@ -133,8 +205,8 @@ export default {
         .doc(this.user.uid)
         .collection("jobs")
         .orderBy("created_at", "desc")
-        .onSnapshot(snapshot => {
-          snapshot.docChanges().forEach(change => {
+        .onSnapshot((snapshot) => {
+          snapshot.docChanges().forEach((change) => {
             const worker = change.doc.data().worker;
             if (change.type === "added") {
               if (!this.workers.includes(worker)) {
@@ -142,12 +214,20 @@ export default {
               }
             }
           });
+          if (!selected) {
+            setTimeout(() => {
+              this.selectWorker();
+            }, 0);
+            selected = true;
+          }
         });
     } else {
       workers = [];
     }
   },
-  computed: mapGetters(["user"])
+  computed: {
+    ...mapGetters(["user", "worker"]),
+  },
 };
 </script>
 
@@ -166,10 +246,10 @@ $main-font: "Righteous", cursive;
       }
     }
     .recent-link {
-      border-radius: 0 0 0 20px;
+      border-radius: 0 0 20px 20px;
     }
     .archives-link {
-      border-radius: 0 0 20px 0;
+      border-radius: 0 0 20px 20px;
     }
   }
   .nav-link {
@@ -185,6 +265,7 @@ $main-font: "Righteous", cursive;
         rgb(25, 143, 53) 38%,
         rgb(47, 179, 76) 100%
       );
+      border: 1px solid rgb(255, 255, 255);
       color: white !important;
     }
   }

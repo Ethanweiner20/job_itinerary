@@ -8,7 +8,8 @@ Vue.config.productionTip = false;
 // In main.js
 
 let app = null;
-auth.onAuthStateChanged(() => {
+
+auth.onAuthStateChanged((user) => {
 	// Init app if not already created
 	if (!app) {
 		app = new Vue({

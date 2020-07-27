@@ -1,11 +1,13 @@
-import { auth } from '@/firebase/init';
+import { auth, usersCollection } from '@/firebase/init';
 
 const state = {
-	user: null
+	user: null,
+	jobsCollection: null
 };
 
 const getters = {
-	user: (state) => state.user
+	user: (state) => state.user,
+	jobsCollection: (state) => usersCollection.doc(state.user.uid).collection('jobs')
 };
 
 const actions = {

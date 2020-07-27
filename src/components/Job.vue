@@ -1,38 +1,88 @@
 <template>
-  <div class="job col-12 m-auto px-sm-5" style="max-width: 1000px;">
-    <form class="mt-4 mb-5 px-4 rounded shadow-lg border border-primary" id="job-form">
+  <div class="job col-12 m-auto px-sm-5" style="max-width: 1000px;" v-if="this.worker">
+    <button
+      class="mt-3 btn btn-warning d-inline shadow"
+      style="border: 3px solid orange !important;"
+      v-if="this.$route.name === 'ArchivesJob'"
+      @click="goToArchives"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24">
+        <path d="M0 0h24v24H0z" fill="none" />
+        <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z" />
+      </svg>
+      Go Back to Archives
+    </button>
+    <form
+      class="mt-4 mb-5 px-4 rounded shadow-lg border border-primary"
+      id="job-form"
+      @input="onInput"
+    >
       <p
+        v-if="this.$route.path === '/recent'"
         class="recent-job-info mt-2 mb-0 text-left text-dark font-weight-bold"
         style="font-size: 12px;"
       >
         Most recent job is shown. Click
-        <span class="text-success">New Job</span>
+        <span class="text-success">Start a New Job</span>
         to add a new one.
       </p>
+
       <p
         class="mt-2 mb-2 text-left font-italic text-info"
         style="font-size: 15px;"
       >Changes save automatically</p>
       <h3 class="recent-job-heading text-left d-inline">
         Job for
-        <strong class="current-worker" style="text-decoration: underline;"></strong>
+        <strong class="current-worker" style="text-decoration: underline;">{{ this.worker }}</strong>
       </h3>
       <button
         id="new-job-button"
-        class="mx-sm-3 mt-2 mt-sm-0 btn btn-success d-inline shadow"
+        class="mt-2 btn btn-block btn-success d-block shadow"
         style="border: 3px solid rgb(109, 216, 114) !important;"
+        @click.prevent="addJob"
+        v-if="this.$route.path === '/recent'"
       >+ Start a New Job</button>
       <div
-        class="alert alert-success mt-2 fade show"
-        style="display: none;"
+        ref="alert"
+        class="alert alert-success mt-2 fade show d-none"
         role="alert"
       >New Job Started!</div>
 
       <hr />
       <!--Main Inputs-->
-      <div class="main-inputs">
+      <div class="main-inputs" v-if="jobData">
         <div class="form-row">
-          <div class="form-group col-12 col-sm-6 col-lg-6">
+          <!--Dates Input-->
+          <div class="form-group dates-form col-12">
+            <label for="dates" class="font-weight-bold">Dates</label>
+            <Day
+              v-for="(date, index) in jobData.dates"
+              :key="index"
+              :date="date"
+              :index="index"
+              @tab="onDateTab"
+            />
+          </div>
+
+          <div class="mb-3 col-12" style="margin-top: -10px;">
+            <button
+              type="button"
+              class="btn btn-sm date-button d-inline text-white"
+              @click="addDate"
+            >+ New Date</button>
+            <p class="text-muted font-italic d-inline ml-2">or press TAB</p>
+          </div>
+          <div class="form-group col-12 col-sm-6 col-lg-4">
+            <label for="time" class="font-weight-bold">Start Time</label>
+            <input
+              type="text"
+              class="form-control"
+              id="time"
+              placeholder="Start Time"
+              v-model="jobData.startTime"
+            />
+          </div>
+          <div class="form-group col-12 col-sm-6 col-lg-4">
             <label for="customer" class="font-weight-bold">Customer</label>
             <input
               type="text"
@@ -41,10 +91,6 @@
               placeholder="Customer"
               v-model="jobData.customer"
             />
-          </div>
-          <div class="form-group col-12 col-sm-6 col-lg-6">
-            <label for="date" class="font-weight-bold">Date</label>
-            <input type="date" class="form-control" id="date" v-model="jobData.date" />
           </div>
           <div class="form-group col-12 col-sm-12 col-lg-4">
             <label for="job-location" class="font-weight-bold">Job Location</label>
@@ -56,32 +102,18 @@
               v-model="jobData.location"
             />
           </div>
-          <div class="form-group col-12 col-sm-6 col-lg-4">
-            <label for="hours" class="font-weight-bold">Start Time</label>
-            <input
-              type="text"
-              class="form-control"
-              id="time"
-              placeholder="Start Time"
-              v-model="jobData.startTime"
-            />
-          </div>
-          <div class="form-group col-12 col-sm-6 col-lg-4">
-            <label for="hours" class="font-weight-bold">End Time / Hours</label>
-            <input
-              type="text"
-              class="form-control"
-              id="hours"
-              placeholder="End Time / Hours"
-              v-model="jobData.hours"
-            />
-          </div>
         </div>
 
         <!--Tools Input-->
         <div class="form-group tools-form">
           <label for="tools" class="font-weight-bold">Tools</label>
-          <Tool v-for="(tool, index) in jobData.tools" :key="index" :tool="tool" />
+          <Tool
+            v-for="(tool, index) in jobData.tools"
+            :key="index"
+            :tool="tool"
+            :index="index"
+            @tab="onToolTab"
+          />
         </div>
 
         <div class="mb-3">
@@ -95,8 +127,30 @@
 
         <!--Tasks Input-->
         <div class="form-group tasks-form">
-          <label for="tasks" class="font-weight-bold">Tasks</label>
-          <Task v-for="(task, index) in jobData.tasks" :key="index" :task="task" />
+          <label for="tasks" class="font-weight-bold d-inline">Tasks</label>
+          <p
+            style="font-size: 13px; margin-top: -7px"
+            class="text-dark font-italic text-right d-inline ml-2"
+          >
+            Reorder tasks by dragging the
+            <span>
+              <svg xmlns="http://www.w3.org/2000/svg" height="15" viewBox="0 0 24 24" width="15">
+                <path d="M0 0h24v24H0z" fill="none" />
+                <path
+                  d="M10 9h4V6h3l-5-5-5 5h3v3zm-1 1H6V7l-5 5 5 5v-3h3v-4zm14 2l-5-5v3h-3v4h3v3l5-5zm-9 3h-4v3H7l5 5 5-5h-3v-3z"
+                />
+              </svg>
+            </span>
+          </p>
+          <draggable v-model="jobData.tasks" group="tasks" @end="onDragEnd">
+            <Task
+              v-for="(task, index) in jobData.tasks"
+              :key="index"
+              :task="task"
+              :index="index"
+              @tab="onTaskTab"
+            />
+          </draggable>
         </div>
 
         <div class="mb-3">
@@ -121,7 +175,12 @@
         <div class="form-group images-form">
           <label for="images" class="images-label font-weight-bold">Images</label>
           <div class="images-container">
-            <Img v-for="(image, index) in jobData.images" :key="index" :image="image" />
+            <Img
+              v-for="(image, index) in jobData.images"
+              :key="index"
+              :image="image"
+              :index="index"
+            />
           </div>
           <button
             type="button"
@@ -146,7 +205,7 @@
 
       <div class="modal fade" id="reset-job-modal" tabindex="-1" role="dialog" aria-hidden="true">
         <div class="modal-dialog" role="document">
-          <form class="delete-worker-form">
+          <form class="delete-worker-form" @submit.prevent="resetData">
             <div class="modal-content">
               <div class="modal-header">
                 <h5 class="modal-title">Are you sure you want to reset?</h5>
@@ -165,7 +224,7 @@
 
       <div class="modal fade" id="delete-job-modal" tabindex="-1" role="dialog" aria-hidden="true">
         <div class="modal-dialog" role="document">
-          <form class="delete-worker-form">
+          <form class="delete-worker-form" @submit.prevent="deleteData">
             <div class="modal-content">
               <div class="modal-header">
                 <h5 class="modal-title">Are you sure you want to delete this job?</h5>
@@ -173,6 +232,7 @@
                   <span aria-hidden="true">&times;</span>
                 </button>
               </div>
+              <p class="text-danger mt-3 ml-3" v-if="deleteFeedback">{{ deleteFeedback }}</p>
               <div class="modal-footer">
                 <button type="submit" class="btn btn-danger" id="delete-job">Delete Job</button>
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
@@ -186,8 +246,12 @@
 </template>
 
 <script>
-import { mapGetters } from "vuex";
+import { mapGetters, mapActions, mapMutations } from "vuex";
+import { debounce } from "debounce";
+import { db } from "@/firebase/init";
+import draggable from "vuedraggable";
 
+import Day from "./job_components/Day";
 import Tool from "./job_components/Tool";
 import Task from "./job_components/Task";
 import Img from "./job_components/Img";
@@ -196,26 +260,171 @@ export default {
   components: {
     Tool,
     Task,
-    Img
+    Img,
+    Day,
+    draggable,
   },
-  computed: mapGetters(["jobData"]),
+  props: ["identifier"],
+  data() {
+    return {
+      fromIndex: null,
+      toIndex: null,
+      deleteFeedback: null,
+    };
+  },
+  computed: mapGetters(["jobData", "worker", "user", "id", "jobsCollection"]),
   methods: {
+    ...mapActions(["getJobData"]),
+    ...mapMutations(["setJobData"]),
+    addJob() {
+      this.jobsCollection
+        .add({
+          worker: this.worker,
+          created_at: new Date(),
+          dates: [],
+          additionalNotes: "",
+          customer: "",
+          images: [],
+          location: "",
+          startTime: "",
+          tasks: [],
+          tools: [],
+        })
+        .then(() => {
+          this.getJobData({ worker: this.worker });
+          this.$refs.alert.classList.remove("d-none");
+          setTimeout(() => {
+            this.$refs.alert.classList.add("d-none");
+          }, 2000);
+        });
+    },
+    async updateFirestore() {
+      await db
+        .collection("users")
+        .doc(this.user.uid)
+        .collection("jobs")
+        .doc(this.id)
+        .set(this.jobData);
+    },
+    debouncedUpdateFirestore: debounce(function () {
+      this.updateFirestore();
+    }, 500),
+    onInput() {
+      this.debouncedUpdateFirestore();
+    },
+    addDate() {
+      this.jobData.dates.push({ date: this.formatDate(new Date()) });
+    },
+    onDateTab(data) {
+      if (this.jobData.dates.length == data.index + 1) {
+        this.addDate();
+      }
+      document.querySelectorAll(".date-input").forEach((element, index) => {
+        if (index === data.index + 1) {
+          element.focus();
+        }
+      });
+    },
     addTool() {
       this.jobData.tools.push({});
+    },
+    onToolTab(data) {
+      if (this.jobData.tools.length == data.index + 1) {
+        this.addTool();
+      }
+      document.querySelectorAll(".tool-input").forEach((element, index) => {
+        if (index === data.index + 1) {
+          element.focus();
+        }
+      });
     },
     addTask() {
       this.jobData.tasks.push({});
     },
+    onTaskTab(data) {
+      if (this.jobData.tasks.length == data.index + 1) {
+        this.addTask();
+      }
+      document.querySelectorAll(".task-input").forEach((element, index) => {
+        if (index === data.index + 1) {
+          element.focus();
+        }
+      });
+    },
     addImage() {
       this.jobData.images.push({});
-    }
-  }
+    },
+    formatDate(d) {
+      var month = "" + (d.getMonth() + 1),
+        day = "" + d.getDate(),
+        year = d.getFullYear();
+
+      if (month.length < 2) month = "0" + month;
+      if (day.length < 2) day = "0" + day;
+
+      return [year, month, day].join("-");
+    },
+    onDragEnd(e) {
+      const event = document.createEvent("HTMLEvents");
+      event.initEvent("input", true, true);
+      e.item.dispatchEvent(event);
+    },
+    resetData() {
+      this.setJobData({
+        worker: this.worker,
+        created_at: new Date(),
+        dates: [],
+        additionalNotes: "",
+        customer: "",
+        images: [],
+        location: "",
+        startTime: "",
+        tasks: [],
+        tools: [],
+      });
+      $("#reset-job-modal").modal("toggle");
+    },
+    async deleteData() {
+      this.deleteFeedback = null;
+      let error = false;
+      await db
+        .collection("users")
+        .doc(this.user.uid)
+        .collection("jobs")
+        .doc(this.id)
+        .delete();
+      this.getJobData({ worker: this.worker })
+        .catch((err) => {
+          this.deleteFeedback = err.message;
+          this.error = true;
+        })
+        .then(() => {
+          if (!this.error) {
+            $("#delete-job-modal").modal("toggle");
+          }
+        });
+    },
+    goToArchives() {
+      this.$router.push({ name: "Archives" });
+    },
+  },
+  created() {
+    this.getJobData({ worker: this.worker, id: this.identifier });
+    this.$store.watch(
+      (state, getters) => getters.worker,
+      (worker) => {
+        console.log(this.identifier);
+        this.getJobData({ worker: this.worker, id: this.identifier });
+      }
+    );
+  },
 };
 </script>
 
 <style lang="scss">
 $tools-color: rgb(146, 107, 35);
 $tasks-color: rgb(0, 107, 93);
+$dates-color: gray;
 .job {
   .form-check {
     font-size: 12px;
@@ -266,6 +475,13 @@ $tasks-color: rgb(0, 107, 93);
     background-color: $tasks-color;
     &:hover {
       background-color: darken($tasks-color, 5);
+    }
+  }
+
+  .date-button {
+    background-color: $dates-color;
+    &:hover {
+      background-color: darken($dates-color, 8);
     }
   }
 

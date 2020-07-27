@@ -1,37 +1,54 @@
+import { db } from '@/firebase/init';
+
 const state = {
-	jobData: {
-		additionalNotes: 'Some notes',
-		customer: 'Some customer',
-		date: '2020-07-18',
-		hours: '8',
-		images: [],
-		location: 'Some location',
-		startTime: 'Some time',
-		tasks: [
-			{
-				completed: true,
-				name: 'Task Name',
-				notes: 'Yessir'
-			}
-		],
-		tools: [],
-		worker: ''
-	}
+	id: null,
+	jobData: {}
 };
 
 const getters = {
-	jobData: (state) => state.jobData
+	jobData: (state) => state.jobData,
+	id: (state) => state.id
 };
 
 const actions = {
-	getJobData({ commit }) {
-		// Retrieve job data from database & commit
+	async getJobData({ commit, rootState }, options) {
+		let user = rootState.Authentication.user;
+
+		// Options determines most recent VS archive
+		let data;
+		let id;
+
+		if (user) {
+			if (options.id) {
+				data = (await db.collection('users').doc(user.uid).collection('jobs').doc(options.id).get()).data();
+				id = options.id;
+			} else {
+				const docs = (await db
+					.collection('users')
+					.doc(user.uid)
+					.collection('jobs')
+					.orderBy('created_at', 'desc')
+					.where('worker', '==', options.worker)
+					.get()).docs;
+				if (docs[0]) {
+					data = docs[0].data();
+					id = docs[0].id;
+				} else {
+					throw new Error('Please refresh the page');
+				}
+			}
+		}
+		commit('setId', id);
+		commit('setJobData', data);
 	}
 };
 
 const mutations = {
 	setJobData(state, data) {
 		state.jobData = data;
+	},
+	setId(state, id) {
+		state.id = id;
 	}
 };
 
