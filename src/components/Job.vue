@@ -1,5 +1,10 @@
 <template>
-  <div class="job col-12 m-auto px-sm-5" style="max-width: 1000px;" v-if="this.worker">
+  <div
+    class="job col-12 m-auto px-sm-5"
+    style="max-width: 1000px;"
+    v-if="this.worker"
+    @input="expandOnInput"
+  >
     <button
       class="mt-3 btn btn-warning d-inline shadow"
       style="border: 3px solid orange !important;"
@@ -255,8 +260,10 @@ import Day from "./job_components/Day";
 import Tool from "./job_components/Tool";
 import Task from "./job_components/Task";
 import Img from "./job_components/Img";
+import expand from "../mixins";
 export default {
   name: "Job",
+  mixins: [expand],
   components: {
     Tool,
     Task,
@@ -409,12 +416,18 @@ export default {
     },
   },
   created() {
-    this.getJobData({ worker: this.worker, id: this.identifier });
+    this.getJobData({ worker: this.worker, id: this.identifier }).then(() => {
+      this.expandTextAreas();
+    });
     this.$store.watch(
       (state, getters) => getters.worker,
       (worker) => {
         console.log(this.identifier);
-        this.getJobData({ worker: this.worker, id: this.identifier });
+        this.getJobData({ worker: this.worker, id: this.identifier }).then(
+          () => {
+            this.expandTextAreas();
+          }
+        );
       }
     );
   },

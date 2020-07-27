@@ -4,9 +4,9 @@
       <button type="button" class="close mr-1" aria-label="Close" @click="deleteImage">
         <span aria-hidden="true">&times;</span>
       </button>
+      <div ref="spinner" class="spinner-border text-success mx-2 d-none"></div>
       <input
         v-if="!image.path"
-        class="file-input"
         type="file"
         name="input-file"
         id="input-file"
@@ -31,10 +31,12 @@
 <script>
 import { mapGetters } from "vuex";
 import { db, storage } from "@/firebase/init";
+import expand from "@/mixins";
 
 export default {
   name: "Img",
   props: ["image", "index"],
+  mixins: [expand],
   data() {
     return {
       feedback: null,
@@ -44,6 +46,7 @@ export default {
   computed: mapGetters(["user", "jobData"]),
   methods: {
     async uploadImage(e) {
+      this.$refs.spinner.classList.remove("d-none");
       const file = e.target.files[0];
       if (file) {
         const reader = new FileReader();
@@ -73,21 +76,23 @@ export default {
             const event = document.createEvent("HTMLEvents");
             event.initEvent("input", true, true);
             e.path[0].dispatchEvent(event);
+            this.$refs.spinner.classList.add("d-none");
           }
         );
       }
     },
     setSource(path) {
-      console.log("setting source");
       storage
         .ref(path)
         .getDownloadURL()
         .then((url) => {
           this.source = url;
+          setTimeout(() => {
+            this.expandTextAreas();
+          }, 0);
         });
     },
     deleteImage(e) {
-      console.log(this.jobData.images, this.index);
       this.jobData.images.splice(this.index, 1);
       const event = document.createEvent("HTMLEvents");
       event.initEvent("input", true, true);
