@@ -1,6 +1,9 @@
 <template>
   <div class="archives">
-    <div class="list-group col-12 m-auto px-sm-5 pl-3 pt-3" style="max-width: 1000px;">
+    <div
+      class="list-group col-12 m-auto px-sm-5 pl-3 pt-3"
+      style="max-width: 1000px; margin-bottom: 50px !important;"
+    >
       <Search @filter="filterArchives" />
 
       <Archive v-for="(archive, index) in filteredArchives" :key="index" :archive="archive" />
@@ -31,7 +34,7 @@ export default {
       usersCollection
         .doc(auth.currentUser.uid)
         .collection("jobs")
-        .where("worker", "==", this.worker)
+        .where("worker.name", "==", this.worker.name)
         .orderBy("created_at", "desc")
         .onSnapshot((snapshot) => {
           this.archives = [];
@@ -59,7 +62,9 @@ export default {
     },
   },
   created() {
-    this.getArchives();
+    if (this.worker) {
+      this.getArchives();
+    }
     this.$store.watch(
       (state, getters) => getters.worker,
       (worker) => {

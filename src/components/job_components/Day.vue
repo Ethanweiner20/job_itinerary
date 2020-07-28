@@ -8,6 +8,11 @@
         <label for="date">Date</label>
         <input v-model="date.date" type="date" class="form-control date-input" />
       </div>
+
+      <div class="form-group col-6 col-md-4">
+        <label for="hours">Start Time</label>
+        <input v-model="date.startTime" type="text" class="form-control" placeholder="Start Time" />
+      </div>
       <div class="form-group col-6 col-md-4">
         <label for="hours">Hours</label>
         <input
@@ -15,16 +20,6 @@
           type="text"
           class="form-control"
           placeholder="Hours for day"
-          @keydown.tab.prevent="onTab"
-        />
-      </div>
-      <div class="form-group col-6 col-md-4">
-        <label for="hours">Start Time</label>
-        <input
-          v-model="date.startTime"
-          type="text"
-          class="form-control"
-          placeholder="Start Time"
           @keydown.tab.prevent="onTab"
         />
       </div>

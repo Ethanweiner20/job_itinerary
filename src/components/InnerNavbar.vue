@@ -11,15 +11,15 @@
         class="custom-select my-2 workers-select"
         size="5"
         @change="changeWorker"
-        v-if="!(this.$route.name === 'ArchivesJob')"
+        v-if="!(this.$route.name === 'ArchivesJob') && workers.length"
       >
         <option selected class="font-italic" disabled>Select worker or group</option>
         <option
           v-for="(worker, index) in workers"
           :key="index"
           class="text-success worker"
-          :value="worker"
-        >{{worker}}</option>
+          :value="worker.name"
+        >{{worker.name}}</option>
       </select>
 
       <button
@@ -67,10 +67,15 @@
               <input
                 type="text"
                 id="name"
-                class="form-control"
+                class="form-control mb-1"
                 placeholder="Worker/Group Name"
-                v-model="newWorker"
+                v-model="newWorker.name"
               />
+              <input type="text" class="form-control" placeholder="Email" v-model="newWorker.email" />
+              <p
+                class="text-primary mt-2"
+                style="font-size: 14px;"
+              >Email will only be used to send notifications when new jobs are added for this worker.</p>
               <div class="subtitle font-italic mt-2 text-info" style="font-size: 12px;">
                 Add a single worker for tracking
                 individual work/hours
@@ -96,9 +101,10 @@
               <h5 class="modal-title">
                 Delete Worker/Group:
                 <span
+                  v-if="worker"
                   id="deleted-worker"
                   class="font-italic text-danger"
-                >{{ worker }}</span>
+                >{{ worker.name }}</span>
               </h5>
               <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                 <span aria-hidden="true">&times;</span>
@@ -123,14 +129,19 @@ export default {
   data() {
     return {
       jobsCollection: null,
-      newWorker: null,
+      newWorker: {
+        name: "",
+        email: "",
+        emailAllowed: true,
+      },
       workers: [],
     };
   },
   methods: {
     ...mapMutations(["setWorker", "setJobData"]),
     changeWorker(e) {
-      this.$store.commit("setWorker", e.target.value);
+      const worker = this.workers.find((w) => w.name == e.target.value);
+      this.$store.commit("setWorker", worker);
     },
     async addWorker() {
       await this.jobsCollection.add({
@@ -146,19 +157,38 @@ export default {
         tools: [],
       });
       $("#new-worker-modal").modal("toggle");
-      this.newWorker = null;
+      this.newWorker = {
+        name: "",
+        email: "",
+      };
+    },
+    async sendEmail(template_params) {
+      var service_id = "default_service";
+      var template_id = "new_job_notification";
+      if (this.emailAllowed) {
+        emailjs.send(service_id, template_id, template_params);
+        this.emailAllowed = false;
+      }
+      setTimeout(() => {
+        this.emailAllowed = true;
+      }, 100000);
     },
     async deleteWorker() {
       await this.jobsCollection
-        .where("worker", "==", this.worker)
+        .where("worker.name", "==", this.worker.name)
         .get()
         .then((snapshot) => {
           snapshot.docs.forEach((doc) => {
             this.jobsCollection.doc(doc.id).delete();
           });
         });
-      this.workers = this.workers.filter((worker) => !(worker == this.worker));
-      this.setWorker(null);
+      this.workers = this.workers.filter(
+        (worker) => !(worker.name == this.worker.name)
+      );
+      this.setWorker({
+        name: "",
+        email: "",
+      });
       this.setJobData({
         worker: this.worker,
         created_at: new Date(),
@@ -175,11 +205,11 @@ export default {
     },
     selectWorker() {
       if (!(this.$route.name === "ArchivesJob")) {
-        const worker = localStorage.getItem("worker");
+        const workerName = localStorage.getItem("workerName");
         const select = this.$refs.workersSelect;
-        if (worker && select.children[0].selected === true) {
+        if (workerName && select.children[0].selected === true) {
           select.children[0].selected = false;
-          select.querySelector(`option[value="${worker}"]`).selected = true;
+          select.querySelector(`option[value="${workerName}"]`).selected = true;
           select.dispatchEvent(new Event("change"));
         }
       }
@@ -209,7 +239,11 @@ export default {
           snapshot.docChanges().forEach((change) => {
             const worker = change.doc.data().worker;
             if (change.type === "added") {
-              if (!this.workers.includes(worker)) {
+              if (
+                !this.workers.find(
+                  (worker) => worker.name === change.doc.data().worker.name
+                )
+              ) {
                 this.workers.push(worker);
               }
             }

@@ -2,7 +2,7 @@
   <div
     class="job col-12 m-auto px-sm-5"
     style="max-width: 1000px;"
-    v-if="this.worker"
+    v-if="worker"
     @input="expandOnInput"
   >
     <button
@@ -38,7 +38,7 @@
       >Changes save automatically</p>
       <h3 class="recent-job-heading text-left d-inline">
         Job for
-        <strong class="current-worker" style="text-decoration: underline;">{{ this.worker }}</strong>
+        <strong class="current-worker" style="text-decoration: underline;">{{ worker.name }}</strong>
       </h3>
       <button
         id="new-job-button"
@@ -251,6 +251,7 @@ import Tool from "./job_components/Tool";
 import Task from "./job_components/Task";
 import Img from "./job_components/Img";
 import expand from "../mixins";
+
 export default {
   name: "Job",
   mixins: [expand],
@@ -267,6 +268,7 @@ export default {
       fromIndex: null,
       toIndex: null,
       deleteFeedback: null,
+      emailAllowed: true,
     };
   },
   computed: mapGetters(["jobData", "worker", "user", "id", "jobsCollection"]),
@@ -287,7 +289,17 @@ export default {
           tools: [],
         })
         .then(() => {
-          this.getJobData({ worker: this.worker });
+          this.getJobData({ worker: this.worker }).then(() => {
+            if (this.worker.email) {
+              this.sendEmail({
+                to_email: this.worker.email,
+                user_email: this.user.email,
+                data_id: this.id,
+                created_at: this.formatDate(this.jobData.created_at.toDate()),
+              });
+            }
+          });
+
           this.$refs.alert.classList.remove("d-none");
           setTimeout(() => {
             this.$refs.alert.classList.add("d-none");
@@ -402,6 +414,17 @@ export default {
     goToArchives() {
       this.$router.push({ name: "Archives" });
     },
+    async sendEmail(template_params) {
+      var service_id = "default_service";
+      var template_id = "new_job_notification";
+      if (this.emailAllowed) {
+        emailjs.send(service_id, template_id, template_params);
+        this.emailAllowed = false;
+      }
+      setTimeout(() => {
+        this.emailAllowed = true;
+      }, 100000);
+    },
   },
   created() {
     this.getJobData({ worker: this.worker, id: this.identifier }).then(() => {
@@ -410,7 +433,6 @@ export default {
     this.$store.watch(
       (state, getters) => getters.worker,
       (worker) => {
-        console.log(this.identifier);
         this.getJobData({ worker: this.worker, id: this.identifier }).then(
           () => {
             this.expandTextAreas();

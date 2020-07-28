@@ -2,7 +2,7 @@ import Vue from 'vue';
 import App from './App.vue';
 import router from './router';
 import store from './store';
-import { auth } from './firebase/init';
+import { auth, db } from './firebase/init';
 
 Vue.config.productionTip = false;
 // In main.js

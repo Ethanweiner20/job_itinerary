@@ -11,7 +11,7 @@ const actions = {};
 const mutations = {
 	setWorker: (state, worker) => {
 		state.worker = worker;
-		localStorage.setItem('worker', worker);
+		localStorage.setItem('workerName', worker.name);
 	}
 };
 

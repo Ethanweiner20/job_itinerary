@@ -23,12 +23,13 @@ const actions = {
 				data = (await db.collection('users').doc(user.uid).collection('jobs').doc(options.id).get()).data();
 				id = options.id;
 			} else {
+				console.log(options);
 				const docs = (await db
 					.collection('users')
 					.doc(user.uid)
 					.collection('jobs')
 					.orderBy('created_at', 'desc')
-					.where('worker', '==', options.worker)
+					.where('worker.name', '==', options.worker.name)
 					.get()).docs;
 				if (docs[0]) {
 					data = docs[0].data();
