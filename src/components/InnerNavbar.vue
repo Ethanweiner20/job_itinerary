@@ -33,6 +33,15 @@
       <button
         type="button"
         data-toggle="modal"
+        data-target="#edit-worker-modal"
+        class="mr-1 my-1 new-worker btn d-inline text-white bg-info shadow"
+        style="width: 275px;"
+        v-if="!(this.$route.name==='Archives' || this.$route.name ==='ArchivesJob')"
+        @click="fillEditedWorker"
+      >Edit Selected Worker/Group</button>
+      <button
+        type="button"
+        data-toggle="modal"
         data-target="#delete-worker-modal"
         class="my-1 delete-worker btn btn-danger d-inline text-white shadow"
         style="width: 275px;"
@@ -118,6 +127,46 @@
         </form>
       </div>
     </div>
+    <div class="modal fade" id="edit-worker-modal" tabindex="-1" role="dialog" aria-hidden="true">
+      <div class="modal-dialog" role="document">
+        <form class="new-worker-form" @submit.prevent="updateWorker">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">
+                Edit Worker/Group:
+                <span
+                  v-if="worker"
+                  id="edited-worker"
+                  class="font-italic text-info"
+                >{{ worker.name }}</span>
+              </h5>
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            <div class="modal-body">
+              <input
+                type="text"
+                id="name"
+                class="form-control mb-1"
+                placeholder="Worker/Group Name"
+                v-model="editedWorker.name"
+              />
+              <input
+                type="text"
+                class="form-control"
+                placeholder="Email"
+                v-model="editedWorker.email"
+              />
+            </div>
+            <div class="modal-footer">
+              <button type="submit" class="btn btn-info">Update</button>
+              <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -132,7 +181,10 @@ export default {
       newWorker: {
         name: "",
         email: "",
-        emailAllowed: true,
+      },
+      editedWorker: {
+        name: "",
+        email: "",
       },
       workers: [],
     };
@@ -143,6 +195,37 @@ export default {
       const worker = this.workers.find((w) => w.name == e.target.value);
       this.$store.commit("setWorker", worker);
     },
+    updateWorker() {
+      this.jobsCollection
+        .where("worker", "==", this.worker)
+        .get()
+        .then((snapshot) => {
+          snapshot.docs.forEach((doc) => {
+            this.jobsCollection
+              .doc(doc.id)
+              .update({ worker: this.editedWorker });
+          });
+          $("#edit-worker-modal").modal("toggle");
+        });
+      this.workers = this.workers.map((worker) => {
+        if (worker.name === this.worker.name) {
+          return this.editedWorker;
+        } else {
+          return worker;
+        }
+      });
+
+      this.$store.commit("setWorker", this.editedWorker);
+    },
+    fillEditedWorker() {
+      if (this.worker) {
+        this.editedWorker = {
+          name: this.worker.name,
+          email: this.worker.email,
+        };
+      }
+    },
+
     async addWorker() {
       await this.jobsCollection.add({
         worker: this.newWorker,
@@ -161,17 +244,6 @@ export default {
         name: "",
         email: "",
       };
-    },
-    async sendEmail(template_params) {
-      var service_id = "default_service";
-      var template_id = "new_job_notification";
-      if (this.emailAllowed) {
-        emailjs.send(service_id, template_id, template_params);
-        this.emailAllowed = false;
-      }
-      setTimeout(() => {
-        this.emailAllowed = true;
-      }, 100000);
     },
     async deleteWorker() {
       await this.jobsCollection
