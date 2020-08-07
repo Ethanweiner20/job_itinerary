@@ -17,7 +17,7 @@
       <textarea rows="1" class="form-control" placeholder="Task" v-model="task.name"></textarea>
       <div class="input-group-append">
         <svg
-          class="ml-1 mt-1"
+          class="ml-1 mt-1 move-task"
           xmlns="http://www.w3.org/2000/svg"
           height="24"
           viewBox="0 0 24 24"

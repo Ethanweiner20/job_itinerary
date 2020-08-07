@@ -137,7 +137,7 @@
               </svg>
             </span>
           </p>
-          <draggable v-model="jobData.tasks" group="tasks" @end="onDragEnd">
+          <draggable v-model="jobData.tasks" group="tasks" handle=".move-task" @end="onDragEnd">
             <Task
               v-for="(task, index) in jobData.tasks"
               :key="index"
